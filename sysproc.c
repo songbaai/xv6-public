@@ -7,15 +7,19 @@
 #include "mmu.h"
 #include "proc.h"
 
+int countsysproc = 0;
+
 int
 sys_fork(void)
 {
+  countsysproc++;
   return fork();
 }
 
 int
 sys_exit(void)
 {
+  countsysproc++;
   exit();
   return 0;  // not reached
 }
@@ -23,12 +27,14 @@ sys_exit(void)
 int
 sys_wait(void)
 {
+  countsysproc++;
   return wait();
 }
 
 int
 sys_kill(void)
 {
+  countsysproc++;
   int pid;
 
   if(argint(0, &pid) < 0)
@@ -39,12 +45,14 @@ sys_kill(void)
 int
 sys_getpid(void)
 {
+  countsysproc++;
   return myproc()->pid;
 }
 
 int
 sys_sbrk(void)
 {
+  countsysproc++;
   int addr;
   int n;
 
@@ -59,6 +67,7 @@ sys_sbrk(void)
 int
 sys_sleep(void)
 {
+  countsysproc++;
   int n;
   uint ticks0;
 
@@ -82,10 +91,20 @@ sys_sleep(void)
 int
 sys_uptime(void)
 {
+  countsysproc++;
   uint xticks;
 
   acquire(&tickslock);
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+
+int 
+sys_info(void)
+{
+  countsysproc++;
+  int param;
+  argint(0,&param);
+  return info(param);
 }

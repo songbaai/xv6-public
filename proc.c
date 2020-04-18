@@ -532,3 +532,36 @@ procdump(void)
     cprintf("\n");
   }
 }
+
+int
+info(int param)
+{
+  struct proc *p;
+  sti();
+  acquire(&ptable.lock);
+  // cprintf("name \t pid \t state \t \n");
+  // cprintf("%d \n", param);
+  if (param == 1){
+    // count processes
+    int count = 0;
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      if(p->state == SLEEPING || p->state == RUNNING || p->state == RUNNABLE || p->state == EMBRYO){
+        // cprintf("%s \t %d \t %s \t \n ", p->name, p->pid, p->state);
+        // count++;
+      }
+      count++;
+    }
+    cprintf("Number of processes is %d. \n", count);
+  } else if(param == 2) {
+    // countsyscall of current process
+    cprintf("Number of system calls for current process is %d. \n", countsysproc);
+  } else if(param == 3) {
+    // count memory pages
+    int cnt = 0;
+    cnt = PGROUNDUP(myproc()->sz) / PGSIZE;
+    cprintf("Number of memory pages for current process is %d. \n", cnt);
+  }
+  release(&ptable.lock);
+
+  return 22;
+}

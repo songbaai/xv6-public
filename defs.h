@@ -103,6 +103,7 @@ int             pipewrite(struct pipe*, char*, int);
 
 //PAGEBREAK: 16
 // proc.c
+extern int      countsysproc;
 int             cpuid(void);
 void            exit(void);
 int             fork(void);
@@ -120,6 +121,7 @@ void            userinit(void);
 int             wait(void);
 void            wakeup(void*);
 void            yield(void);
+int             info(int);
 
 // swtch.S
 void            swtch(struct context**, struct context*);
