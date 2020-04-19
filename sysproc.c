@@ -103,6 +103,7 @@ sys_uptime(void)
 int 
 sys_info(void)
 {
+  // cprintf("sysinfo \n");
   countsysproc++;
   int param;
   argint(0,&param);

@@ -540,16 +540,17 @@ info(int param)
   sti();
   acquire(&ptable.lock);
   // cprintf("name \t pid \t state \t \n");
-  // cprintf("%d \n", param);
+  cprintf("proc info \n");
   if (param == 1){
     // count processes
     int count = 0;
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state == SLEEPING || p->state == RUNNING || p->state == RUNNABLE || p->state == EMBRYO){
+      // if(p->state == SLEEPING || p->state == RUNNING || p->state == RUNNABLE || p->state == EMBRYO){
+      if(p->state != UNUSED){
         // cprintf("%s \t %d \t %s \t \n ", p->name, p->pid, p->state);
-        // count++;
+        count++;
       }
-      count++;
+      // count++;
     }
     cprintf("Number of processes is %d. \n", count);
   } else if(param == 2) {

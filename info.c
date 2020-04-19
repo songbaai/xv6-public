@@ -7,6 +7,7 @@
 int
 main(int argc, char *argv[])
 {
+    // printf(1, "info main \n");
     if(argc == 2){
         // yes
         if(atoi(argv[1]) == 1){
