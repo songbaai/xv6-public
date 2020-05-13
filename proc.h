@@ -51,6 +51,7 @@ struct proc {
   char name[16];               // Process name (debugging)
   int ticket_num;  // number of tickets
   int times;  // times run
+  int stride_sum;  // sum of tickets
 };
 
 int total_tickets;

@@ -4,7 +4,7 @@
 int main(int argc, char *argv[])
 {
     // FUNCTION_SETS_NUMBER_OF_TICKETS(30); // write your own function here
-    tickets(10);
+    tickets(66);
     int i, k;
     const int loop = 43000;
     for (i = 0; i < loop; i++)

@@ -6,6 +6,9 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#include "fcntl.h"
+// #include "file.h"
+// #include "sysfile.c"
 struct {
   struct spinlock lock;
   struct proc proc[NPROC];
@@ -359,23 +362,58 @@ scheduler(void)
       if(addticket>=prizenum){
         c->proc = p;
         p->times++;
+        if(p->times >100000){
+          p->times = 0;
+        }
+        // printprogtable(p);
         switchuvm(p);
         p->state = RUNNING;
         swtch(&(c->scheduler), p->context);
         switchkvm();
         c->proc = 0;
-          // cprintf("In lottery scheduler %d \n",ticketrunnable);
+        // cprintf("In lottery scheduler %d \n",ticketrunnable);
+        // getdistribution();
         break;
       }
     }
     release(&ptable.lock);
-    // getdistribution();
     continue;
 #endif
 
 #ifdef STRIDE
-
-
+        // cprintf("In stride scheduler\n");
+    int minstride = 65536;
+    struct proc *minp;
+    acquire(&ptable.lock);
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      if(p->state != RUNNABLE) continue;
+      if(p->stride_sum<minstride){
+        minstride = p->stride_sum;
+        minp = p;
+      }
+    }
+    if(minstride>5000){
+      for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+        if(p->state != RUNNABLE) continue;
+        p->stride_sum -= 5000;
+      }
+    }
+    if(minp){
+      minp->stride_sum += minp->ticket_num;
+      c->proc = minp;
+      minp->times++;
+      if(p->times >100000){
+        p->times = 0;
+      }
+      // printprogtable(minp);
+      switchuvm(minp);
+      minp->state = RUNNING;
+      swtch(&(c->scheduler), minp->context);
+      switchkvm();
+      c->proc = 0;
+      // cprintf("In lottery scheduler %d \n",ticketrunnable);
+    }
+    release(&ptable.lock);
     continue;
 #endif
 
@@ -640,6 +678,8 @@ int randgen(int max) {
   if(max <= 0){
     return 0;
   }
+  int rand;
+
   // static int z1 = 12345; // 12345 for rest of zx
   // static int z2 = 12345; // 12345 for rest of zx
   // static int z3 = 12345; // 12345 for rest of zx
@@ -654,18 +694,17 @@ int randgen(int max) {
   // z3 = (((z3 & 4294967280) << 7) ^ b);
   // b = (((z4 << 3) ^ z4) >> 12);
   // z4 = (((z4 & 4294967168) << 13) ^ b);
-  // int rand = ((z1 ^ z2 ^ z3 ^ z4))%max;
+  // rand = ((z1 ^ z2 ^ z3 ^ z4))%max;
   // if(rand < 0) {
   //   rand = rand * -1;
   // }
 
-  // unsigned period = 0;
-
   /* taps: 16 14 13 11; characteristic polynomial: x^16 + x^14 + x^13 + x^11 + 1 */
   bit  = ((lfsr >> 0) ^ (lfsr >> 2) ^ (lfsr >> 3) ^ (lfsr >> 5) ) & 1;
   lfsr =  (lfsr >> 1) | (bit << 15);
-  // ++period;
-  return (int)lfsr%max;
+  rand = (int)lfsr%max;
+
+  return rand;
 }
 
 void
@@ -673,11 +712,23 @@ getdistribution()
 {
   struct proc* p;
 
-  acquire(&ptable.lock);
+  // acquire(&ptable.lock);
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
     if(p->ticket_num != 0 && p->pid != 0) {  
-      cprintf("Name: %s\tPID: %d\tExecs: %d\tTickets: %d \n", p->name, p->pid, p->times,p->ticket_num);
+      // cprintf("Name: %s\tPID: %d\tExecs: %d\tTickets: %d\tCurTime: %d\n", p->name, p->pid, p->times,p->ticket_num,ticks);
+      // if (p->ticket_num%11 == 0){
+        cprintf("Name: %s\tExecs: %d\tTickets: %d\tCurTime: %d\n", p->name, p->times,p->ticket_num,ticks);
+      // }
     }
   }
-  release(&ptable.lock);
+  // release(&ptable.lock);
+}
+
+int 
+printprogtable(struct proc *p)
+{
+  if (p->ticket_num%11 == 0){
+    cprintf("%s\t%d\t%d\t%d\n", p->name, p->times,p->ticket_num,ticks);
+  }
+  return 0;
 }

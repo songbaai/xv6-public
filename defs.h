@@ -125,6 +125,10 @@ int             info(int);
 int             tickets(int);
 int             randgen(int);
 void            getdistribution();
+int             printprogtable(struct proc *p);
+
+int             open(const char*, int);
+int             write(int, const void*, int);
 
 // swtch.S
 void            swtch(struct context**, struct context*);
