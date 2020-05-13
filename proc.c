@@ -715,7 +715,6 @@ getdistribution()
   // acquire(&ptable.lock);
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
     if(p->ticket_num != 0 && p->pid != 0) {  
-      // cprintf("Name: %s\tPID: %d\tExecs: %d\tTickets: %d\tCurTime: %d\n", p->name, p->pid, p->times,p->ticket_num,ticks);
       // if (p->ticket_num%11 == 0){
         cprintf("Name: %s\tExecs: %d\tTickets: %d\tCurTime: %d\n", p->name, p->times,p->ticket_num,ticks);
       // }
