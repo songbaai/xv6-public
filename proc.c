@@ -365,7 +365,7 @@ scheduler(void)
         if(p->times >100000){
           p->times = 0;
         }
-        // printprogtable(p);
+        printprogtable(p);
         switchuvm(p);
         p->state = RUNNING;
         swtch(&(c->scheduler), p->context);
@@ -382,7 +382,7 @@ scheduler(void)
 
 #ifdef STRIDE
         // cprintf("In stride scheduler\n");
-    int minstride = 65536;
+    int minstride = 655360;
     struct proc *minp;
     acquire(&ptable.lock);
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
@@ -392,20 +392,20 @@ scheduler(void)
         minp = p;
       }
     }
-    if(minstride>5000){
+    if(minstride>500000){
       for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-        if(p->state != RUNNABLE) continue;
-        p->stride_sum -= 5000;
+        if(p->stride_sum > 500000) 
+          p->stride_sum -= 500000;
       }
     }
     if(minp){
       minp->stride_sum += minp->ticket_num;
       c->proc = minp;
       minp->times++;
-      if(p->times >100000){
-        p->times = 0;
+      if(p->times >500000){
+        p->times = 10;
       }
-      // printprogtable(minp);
+      printprogtable(minp);
       switchuvm(minp);
       minp->state = RUNNING;
       swtch(&(c->scheduler), minp->context);
@@ -715,9 +715,9 @@ getdistribution()
   // acquire(&ptable.lock);
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
     if(p->ticket_num != 0 && p->pid != 0) {  
-      // if (p->ticket_num%11 == 0){
+      if (p->ticket_num%11 == 0){
         cprintf("Name: %s\tExecs: %d\tTickets: %d\tCurTime: %d\n", p->name, p->times,p->ticket_num,ticks);
-      // }
+      }
     }
   }
   // release(&ptable.lock);
