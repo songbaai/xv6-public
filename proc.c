@@ -6,7 +6,6 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
-
 struct {
   struct spinlock lock;
   struct proc proc[NPROC];
@@ -88,6 +87,7 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
+  p->ticket_num=10;
 
   release(&ptable.lock);
 
@@ -149,6 +149,7 @@ userinit(void)
   acquire(&ptable.lock);
 
   p->state = RUNNABLE;
+  // p->ticket_num = 10;
 
   release(&ptable.lock);
 }
@@ -196,6 +197,10 @@ fork(void)
     np->state = UNUSED;
     return -1;
   }
+#ifdef LOTTERY2
+  np->ticket_num = np->parent->ticket_num;
+#endif
+
   np->sz = curproc->sz;
   np->parent = curproc;
   *np->tf = *curproc->tf;
@@ -311,6 +316,8 @@ wait(void)
   }
 }
 
+int isseeded = 0;
+
 //PAGEBREAK: 42
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
@@ -329,6 +336,48 @@ scheduler(void)
   for(;;){
     // Enable interrupts on this processor.
     sti();
+
+//TODO
+#ifdef LOTTERY
+    int ticketrunnable = 0;
+    acquire(&ptable.lock);
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      if(p->state == RUNNABLE){
+        ticketrunnable += p->ticket_num;
+          // cprintf("runnable count %d \n",ticketrunnable);
+      }
+    }
+    release(&ptable.lock);
+    int prizenum;
+    prizenum = randgen(ticketrunnable);
+    int addticket = 0;
+
+    acquire(&ptable.lock);
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      if(p->state != RUNNABLE) continue;
+      addticket += p->ticket_num;
+      if(addticket>=prizenum){
+        c->proc = p;
+        p->times++;
+        switchuvm(p);
+        p->state = RUNNING;
+        swtch(&(c->scheduler), p->context);
+        switchkvm();
+        c->proc = 0;
+          // cprintf("In lottery scheduler %d \n",ticketrunnable);
+        break;
+      }
+    }
+    release(&ptable.lock);
+    // getdistribution();
+    continue;
+#endif
+
+#ifdef STRIDE
+
+
+    continue;
+#endif
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
@@ -349,6 +398,7 @@ scheduler(void)
       // Process is done running for now.
       // It should have changed its p->state before coming back.
       c->proc = 0;
+      cprintf("In normal scheduler \n");
     }
     release(&ptable.lock);
 
@@ -565,4 +615,69 @@ info(int param)
   release(&ptable.lock);
 
   return 22;
+}
+
+int tickets(int param)
+{
+  acquire(&ptable.lock);
+  struct proc *curproc = myproc();
+  curproc->ticket_num = param;
+  release(&ptable.lock);
+  return 23;
+}
+
+void proctickets(struct proc *p, int ti)
+{
+  total_tickets -= p->ticket_num;
+  p->ticket_num = ti;
+  total_tickets += ti;
+}
+
+// unsigned short lfsr = 0xACE1u;
+unsigned short lfsr = 123;
+unsigned bit;
+int randgen(int max) {
+  if(max <= 0){
+    return 0;
+  }
+  // static int z1 = 12345; // 12345 for rest of zx
+  // static int z2 = 12345; // 12345 for rest of zx
+  // static int z3 = 12345; // 12345 for rest of zx
+  // static int z4 = 12345; // 12345 for rest of zx
+
+  // int b;
+  // b = (((z1 << 6) ^ z1) >> 13);
+  // z1 = (((z1 & 4294967294) << 18) ^ b);
+  // b = (((z2 << 2) ^ z2) >> 27);
+  // z2 = (((z2 & 4294967288) << 2) ^ b);
+  // b = (((z3 << 13) ^ z3) >> 21);
+  // z3 = (((z3 & 4294967280) << 7) ^ b);
+  // b = (((z4 << 3) ^ z4) >> 12);
+  // z4 = (((z4 & 4294967168) << 13) ^ b);
+  // int rand = ((z1 ^ z2 ^ z3 ^ z4))%max;
+  // if(rand < 0) {
+  //   rand = rand * -1;
+  // }
+
+  // unsigned period = 0;
+
+  /* taps: 16 14 13 11; characteristic polynomial: x^16 + x^14 + x^13 + x^11 + 1 */
+  bit  = ((lfsr >> 0) ^ (lfsr >> 2) ^ (lfsr >> 3) ^ (lfsr >> 5) ) & 1;
+  lfsr =  (lfsr >> 1) | (bit << 15);
+  // ++period;
+  return (int)lfsr%max;
+}
+
+void
+getdistribution()
+{
+  struct proc* p;
+
+  acquire(&ptable.lock);
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+    if(p->ticket_num != 0 && p->pid != 0) {  
+      cprintf("Name: %s\tPID: %d\tExecs: %d\tTickets: %d \n", p->name, p->pid, p->times,p->ticket_num);
+    }
+  }
+  release(&ptable.lock);
 }

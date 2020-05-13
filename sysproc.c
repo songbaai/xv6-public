@@ -109,3 +109,19 @@ sys_info(void)
   argint(0,&param);
   return info(param);
 }
+
+int 
+sys_tickets(void)
+{
+  int param;
+  if (argint(0,&param)<0)
+    return -1;
+  return tickets(param);
+}
+
+int 
+sys_showlottery(void)
+{
+  getdistribution();
+  return 1;
+}

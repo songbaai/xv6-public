@@ -122,6 +122,9 @@ int             wait(void);
 void            wakeup(void*);
 void            yield(void);
 int             info(int);
+int             tickets(int);
+int             randgen(int);
+void            getdistribution();
 
 // swtch.S
 void            swtch(struct context**, struct context*);
