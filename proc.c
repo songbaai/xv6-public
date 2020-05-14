@@ -200,7 +200,7 @@ fork(void)
     np->state = UNUSED;
     return -1;
   }
-#ifdef LOTTERY2
+#ifdef LOTTERY
   np->ticket_num = np->parent->ticket_num;
 #endif
 
