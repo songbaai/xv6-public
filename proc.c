@@ -680,25 +680,6 @@ int randgen(int max) {
   }
   int rand;
 
-  // static int z1 = 12345; // 12345 for rest of zx
-  // static int z2 = 12345; // 12345 for rest of zx
-  // static int z3 = 12345; // 12345 for rest of zx
-  // static int z4 = 12345; // 12345 for rest of zx
-
-  // int b;
-  // b = (((z1 << 6) ^ z1) >> 13);
-  // z1 = (((z1 & 4294967294) << 18) ^ b);
-  // b = (((z2 << 2) ^ z2) >> 27);
-  // z2 = (((z2 & 4294967288) << 2) ^ b);
-  // b = (((z3 << 13) ^ z3) >> 21);
-  // z3 = (((z3 & 4294967280) << 7) ^ b);
-  // b = (((z4 << 3) ^ z4) >> 12);
-  // z4 = (((z4 & 4294967168) << 13) ^ b);
-  // rand = ((z1 ^ z2 ^ z3 ^ z4))%max;
-  // if(rand < 0) {
-  //   rand = rand * -1;
-  // }
-
   /* taps: 16 14 13 11; characteristic polynomial: x^16 + x^14 + x^13 + x^11 + 1 */
   bit  = ((lfsr >> 0) ^ (lfsr >> 2) ^ (lfsr >> 3) ^ (lfsr >> 5) ) & 1;
   lfsr =  (lfsr >> 1) | (bit << 15);
