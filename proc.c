@@ -402,8 +402,8 @@ scheduler(void)
       minp->stride_sum += minp->ticket_num;
       c->proc = minp;
       minp->times++;
-      if(p->times >500000){
-        p->times = 10;
+      if(minp->times >500000){
+        minp->times = 10;
       }
       printprogtable(minp);
       switchuvm(minp);
