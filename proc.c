@@ -200,9 +200,6 @@ fork(void)
     np->state = UNUSED;
     return -1;
   }
-#ifdef LOTTERY
-  np->ticket_num = np->parent->ticket_num;
-#endif
 
   np->sz = curproc->sz;
   np->parent = curproc;
@@ -664,13 +661,6 @@ int tickets(int param)
   return 23;
 }
 
-void proctickets(struct proc *p, int ti)
-{
-  total_tickets -= p->ticket_num;
-  p->ticket_num = ti;
-  total_tickets += ti;
-}
-
 // unsigned short lfsr = 0xACE1u;
 unsigned short lfsr = 123;
 unsigned bit;
@@ -692,7 +682,6 @@ void
 getdistribution()
 {
   struct proc* p;
-
   // acquire(&ptable.lock);
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
     if(p->ticket_num != 0 && p->pid != 0) {  
